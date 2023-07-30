@@ -1,0 +1,27 @@
+:root {
+  /* Customize Bootstrap variables */
+  --bs-link-color: #4f47a5;
+  --bs-link-hover-color: #4f47a5;
+  --bs-pagination-active-bg: #4f47a5;
+  --bs-pagination-active-border-color: #4f47a5;
+}
+
+body {
+  padding: 50px;
+  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
+}
+
+a {
+  color: #00B7FF;
+}
+
+.btn-purple {
+  background: #4f47a5;
+}
+
+.result-item {
+  /* The height and overflow properties are removed to allow dynamic height */
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 10px;
+}

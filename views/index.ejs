@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JSearch | 搜尋判決書</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="/stylesheets/style.css">
+</head>
+<body>
+
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card border-0">
+        <div class="card-body">
+          <h3 class="card-title text-center mb-4">JSearch</h3>
+          <!-- Search Bar -->
+          <form class="d-flex flex-column align-items-center" onsubmit="search(event)">
+            <input id="searchInput" class="form-control me-2" type="search" placeholder="Search..." aria-label="Search">
+            <button class="btn btn-primary mt-3" type="submit" style="background: #4f47a5;">搜尋判決書</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search Results Container -->
+  <div id="searchResultsContainer" class="row mt-2 justify-content-center">
+    <div class="col-md-8">
+      <div id="totalResultsCount" class="mb-2 font-weight-bold"></div>
+      <div id="searchResults">
+        <!-- Results will be dynamically added here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination Links -->
+  <div class="row mt-5 justify-content-center">
+    <div class="col-md-8">
+      <nav aria-label="Page navigation">
+        <ul id="pagination" class="pagination justify-content-center">
+          <!-- Pagination links will be dynamically added here -->
+        </ul>
+      </nav>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // Define global variables for current page and items per page
+  let currentPage = 1;
+  const itemsPerPage = 10;
+
+  // Function to display search results
+  function showSearchResults(data) {
+    const searchResultsDiv = document.getElementById("searchResults");
+    const totalResultsCountDiv = document.getElementById("totalResultsCount");
+
+    // Clear previous search results
+    searchResultsDiv.innerHTML = "";
+
+    // Extract the results and pagination information from the data
+    const results = data.data;
+    const totalItems = data.totalItems;
+    const totalPages = data.totalPages;
+
+    // Display total results count
+    totalResultsCountDiv.innerHTML = `約有 <span style="color: #4f47a5;">${totalItems.toLocaleString()}</span> 項結果`;
+
+    // Loop through each result item and create a card for it
+    results.forEach((result) => {
+      const resultItem = document.createElement('div');
+      resultItem.classList.add('result-item', 'mb-3', 'border', 'p-3');
+
+      const truncatedJFULL = convertTextToHtml(truncateJFULL(result.JFULL, 10))
+
+      resultItem.innerHTML = `
+        <h5>${result.JDATE}</h5>
+        <h6>${result.JTITLE}</h6>
+        <p class="truncated-text">${truncatedJFULL}</p>
+        <button class="btn btn-link btn-sm mt-2" data-bs-toggle="collapse" data-bs-target="#collapse_${result.JID}" style="text-decoration: none; color: #4f47a5;">Show More</button>
+        <div id="collapse_${result.JID}" class="collapse mt-2">
+          <p>${convertTextToHtml(result.JFULL)}</p>
+        </div>
+      `;
+
+      searchResultsDiv.appendChild(resultItem);
+
+      // Display pagination links
+      const paginationDiv = document.getElementById("pagination");
+      paginationDiv.innerHTML = "";
+
+      if (totalPages > 1) {
+        const paginationList = document.createElement("ul");
+        paginationList.classList.add("pagination", "justify-content-center");
+
+        // Previous page button
+        if (currentPage > 1) {
+          const previousPageButton = createPaginationButton(currentPage - 1, "上一頁", false);
+          paginationList.appendChild(previousPageButton);
+        }
+
+        // Page links
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, startPage + 4);
+
+        for (let i = startPage; i <= endPage; i++) {
+          const pageButton = createPaginationButton(i, i, i === currentPage);
+          paginationList.appendChild(pageButton);
+        }
+
+        // Next page button
+        if (currentPage < totalPages) {
+          const nextPageButton = createPaginationButton(currentPage + 1, "下一頁", false);
+          paginationList.appendChild(nextPageButton);
+        }
+
+        paginationDiv.appendChild(paginationList);
+      }
+    });
+  }
+
+  // Function to handle the search form submission
+  function search(event) {
+    event.preventDefault();
+
+    const searchInput = document.getElementById("searchInput");
+    const searchTerm = searchInput.value.trim();
+
+    // Perform the search using fetch API (POST request)
+    fetch(`/api/jsearch?page=${currentPage}&itemsPerPage=${itemsPerPage}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ searchKeyword: searchTerm })
+    })
+      .then(response => response.json())
+      .then(data => showSearchResults(data))
+      .catch(error => console.error("Error:", error));
+
+    // // Display the search results
+    // showSearchResults(searchResults);
+  }
+
+  // Function to convert text with newline and space to HTML
+  function convertTextToHtml(text) {
+    const lines = text.split("\r\n");
+    const htmlLines = lines.map((line) => {
+      const indents = line.match(/^\s+/); // Match the leading spaces
+      if (indents) {
+        const spaces = indents[0].replace(/ /g, "&nbsp;");
+        return line.replace(/^\s+/, spaces);
+      } else {
+        return line;
+      }
+    });
+    return htmlLines.join("<br>");
+  }
+
+  // Function to truncate JFULL to a specified number of words
+  function truncateJFULL(text, maxLength) {
+    if (text.length > maxLength) {
+      return text.slice(0, maxLength) + '...';
+    }
+    return text;
+  }
+
+  // Function to go to a specific page
+  function goToPage(page) {
+    currentPage = page;
+    search(event);
+    window.scrollTo(0, 0);
+  }
+
+  // Function to create a pagination button
+  function createPaginationButton(page, label, isActive) {
+    const pageButton = document.createElement("li");
+    pageButton.classList.add("page-item");
+    if (isActive) {
+      pageButton.classList.add("active");
+    }
+
+    const pageLink = document.createElement("button");
+    pageLink.classList.add("page-link");
+    pageLink.classList.add("page-color");
+    pageLink.innerText = label;
+    pageLink.addEventListener("click", () => goToPage(page));
+
+    pageButton.appendChild(pageLink);
+    return pageButton;
+  }
+</script>
+
+</body>
+</html>
+
+</body>
+</html>
