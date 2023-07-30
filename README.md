@@ -1,10 +1,10 @@
 # JSearch
 
-[JSearch](https://jsearch.aaronpan.site) is a service that can search judgments in Taiwan. It's just a simple project for a demo. The data source for judgments is from [司法院資料開放平臺](https://opendata.judicial.gov.tw/).
+[JSearch](https://jsearch.aaronpan.site) is a service that can search judgments in Taiwan. It's just a simple project for demo. The data source for judgments is from [司法院資料開放平臺](https://opendata.judicial.gov.tw/).
 
 ![home-page](./doc/home-page.png)
 
-## Teck Stack
+## Tech Stack
 - [Node.js](https://nodejs.org/)
 - [express](https://www.npmjs.com/package/express)
 - [express-generator](https://www.npmjs.com/package/express-generator)
@@ -30,6 +30,9 @@ vim .env
 3. Build and start MongoDB
 ```
 docker-compose up -d 
+
+# Need to create a DB and user for the first time. 
+# Reference: https://www.mongodb.com/docs/manual/tutorial/create-users/
 ```
 
 4. Install dependencies
